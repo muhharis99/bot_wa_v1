@@ -91,10 +91,10 @@ $serviceAlive = $heartbeatAge <= 120;
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Dashboard Bot WA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/2.2.2/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-responsive-bs5/3.0.4/responsive.bootstrap5.min.css" rel="stylesheet">
     <style>
-        body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.qr{max-width:280px;width:100%}.schedule-row.is-locked{background:#f8f9fa}.save-feedback{min-width:92px;display:inline-block}.today-row{box-shadow:inset 4px 0 #0d6efd}.schedule-table td{vertical-align:middle}.quick-time{font-size:.72rem;padding:.1rem .35rem}.dt-container .dt-search input,.dt-container .dt-length select{border-radius:.375rem}.dtr-details{width:100%}.dtr-details li{padding:.5rem 0!important}.dtr-title{min-width:110px}.table.dataTable>tbody>tr.child ul.dtr-details{display:block}
+        body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.qr{max-width:280px;width:100%}.schedule-row.is-locked{background:#f8f9fa}.save-feedback{min-width:92px;display:inline-block}.today-row{box-shadow:inset 4px 0 #0d6efd}.schedule-table td{vertical-align:middle}.quick-time{font-size:.72rem;padding:.1rem .35rem}.dt-container .dt-search input,.dt-container .dt-length select{border-radius:.375rem}.dtr-details{width:100%}.dtr-details li{padding:.5rem 0!important}.dtr-title{min-width:110px}.table.dataTable>tbody>tr.child ul.dtr-details{display:block}.datatable-runtime{font-size:.78rem}
     </style>
 </head>
 <body>
@@ -112,7 +112,7 @@ $serviceAlive = $heartbeatAge <= 120;
     <div class="card mb-4 border-start border-4 border-success"><div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"><div><h2 class="h5 mb-1">Import Jadwal Excel</h2><div class="text-secondary small">Upload file .xlsx. Sistem membaca tanggal, bulan, hari, shift, jam masuk, jam berangkat, Libur, dan dapat menebak tahun dari kecocokan nama hari.</div></div><a href="import_jadwal.php" class="btn btn-success text-nowrap">Upload & Preview Excel</a></div></div>
 
     <div class="card mb-4" id="jadwal"><div class="card-body">
-        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><h2 class="h5 mb-1">Jadwal Mingguan</h2><div class="text-secondary small"><?=e($weekDate->format('d-m-Y'))?> s/d <?=e($weekEndDate->format('d-m-Y'))?></div></div><button type="button" class="btn btn-outline-primary" id="copyPrevious">Salin Jadwal Minggu Lalu</button></div>
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><h2 class="h5 mb-1">Jadwal Mingguan</h2><div class="text-secondary small"><?=e($weekDate->format('d-m-Y'))?> s/d <?=e($weekEndDate->format('d-m-Y'))?></div><div id="datatableRuntime" class="datatable-runtime text-secondary mt-1">DataTables: memuat...</div></div><button type="button" class="btn btn-outline-primary" id="copyPrevious">Salin Jadwal Minggu Lalu</button></div>
         <div class="d-flex flex-wrap gap-2 mb-3"><a class="btn btn-outline-secondary btn-sm" href="?week=<?=e($prevWeek)?>#jadwal">◀ Minggu Sebelumnya</a><a class="btn btn-outline-dark btn-sm" href="?week=<?=e($thisWeek)?>#jadwal">Minggu Ini</a><a class="btn btn-outline-secondary btn-sm" href="?week=<?=e($nextWeek)?>#jadwal">Minggu Berikutnya ▶</a></div>
         <div id="ajaxAlert"></div>
         <table id="scheduleTable" class="table table-hover schedule-table align-middle nowrap w-100"><thead><tr><th data-priority="1">Tanggal &amp; Hari</th><th data-priority="2">Shift</th><th data-priority="3">Jam Berangkat</th><th data-priority="4">Status</th><th data-priority="5">Simpan</th></tr></thead><tbody>
@@ -130,10 +130,10 @@ $serviceAlive = $heartbeatAge <= 120;
 
     <div class="card"><div class="card-body"><h2 class="h5 mb-3">Riwayat Log</h2><table id="logTable" class="table table-hover table-sm align-middle nowrap w-100"><thead><tr><th data-priority="1">Waktu</th><th data-priority="2">Nomor</th><th data-priority="3">Pesan</th><th data-priority="2">Status</th><th data-priority="4">Error</th></tr></thead><tbody><?php foreach($logs as $l): ?><tr><td data-order="<?=e($l['waktu'])?>"><?=e($l['waktu'])?></td><td><?=e($l['nomor_tujuan'])?></td><td><?=e($l['isi_pesan'])?></td><td><?=e($l['status'])?></td><td class="text-danger small"><?=e($l['pesan_error'] ?: '-')?></td></tr><?php endforeach; ?></tbody></table></div></div>
 </main>
-<script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net/2.2.2/dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/2.2.2/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-responsive/3.0.4/dataTables.responsive.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-responsive-bs5/3.0.4/responsive.bootstrap5.min.js"></script>
 <script>
 const optionMap = <?=json_encode($optionMap, JSON_UNESCAPED_SLASHES)?>;
 const csrf = <?=json_encode(csrf_token())?>;
@@ -146,36 +146,49 @@ async function saveRow(row){const feedback=row.querySelector('.save-feedback'),s
 function showAlert(message,type='success'){document.getElementById('ajaxAlert').innerHTML=`<div class="alert alert-${type} py-2">${message}</div>`;setTimeout(()=>document.getElementById('ajaxAlert').innerHTML='',4000)}
 function bindScheduleRows(){document.querySelectorAll('#scheduleTable tbody .schedule-row').forEach(row=>{if(row.dataset.bound==='1')return;row.dataset.bound='1';const shift=row.querySelector('.shift-select'),input=row.querySelector('.jam-input');renderQuickTimes(row);if(row.classList.contains('is-locked')||!shift||!input)return;shift.addEventListener('change',async()=>{if(shift.value==='libur'||!shift.value){input.value='';input.disabled=true}else input.disabled=false;renderQuickTimes(row);await saveRow(row)});input.addEventListener('change',()=>saveRow(row))})}
 
-const scheduleDataTable = new DataTable('#scheduleTable',{
-    responsive:true,
-    paging:true,
-    searching:true,
-    info:true,
-    ordering:true,
-    pageLength:7,
-    lengthMenu:[[7,10,25,-1],[7,10,25,'Semua']],
-    order:[[0,'asc']],
-    autoWidth:false,
-    language:{search:'Cari jadwal:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ jadwal',infoEmpty:'Belum ada jadwal',zeroRecords:'Jadwal tidak ditemukan',emptyTable:'Belum ada jadwal',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
-    columnDefs:[
-        {responsivePriority:1,targets:0},
-        {responsivePriority:2,targets:1,orderable:false},
-        {responsivePriority:3,targets:2,orderable:false},
-        {responsivePriority:4,targets:3},
-        {responsivePriority:5,targets:4,orderable:false,searchable:false}
-    ],
-    drawCallback:bindScheduleRows
-});
-bindScheduleRows();
+function initTables(){
+    const runtime=document.getElementById('datatableRuntime');
+    if(typeof DataTable==='undefined'){
+        runtime.className='datatable-runtime text-danger mt-1';
+        runtime.textContent='DataTables: GAGAL DIMUAT - cek koneksi/CDN browser';
+        bindScheduleRows();
+        return;
+    }
+    try{
+        new DataTable('#scheduleTable',{
+            responsive:true,
+            paging:true,
+            searching:true,
+            info:true,
+            ordering:true,
+            pageLength:7,
+            lengthMenu:[[7,10,25,-1],[7,10,25,'Semua']],
+            order:[[0,'asc']],
+            autoWidth:false,
+            language:{search:'Cari jadwal:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ jadwal',infoEmpty:'Belum ada jadwal',zeroRecords:'Jadwal tidak ditemukan',emptyTable:'Belum ada jadwal',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
+            columnDefs:[{responsivePriority:1,targets:0},{responsivePriority:2,targets:1,orderable:false},{responsivePriority:3,targets:2,orderable:false},{responsivePriority:4,targets:3},{responsivePriority:5,targets:4,orderable:false,searchable:false}],
+            drawCallback:bindScheduleRows
+        });
+        new DataTable('#logTable',{
+            responsive:true,
+            pageLength:10,
+            lengthMenu:[[10,25,50],[10,25,50]],
+            order:[[0,'desc']],
+            language:{search:'Cari:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ log',infoEmpty:'Belum ada log',zeroRecords:'Data tidak ditemukan',emptyTable:'Belum ada riwayat log',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
+            columnDefs:[{responsivePriority:1,targets:0},{responsivePriority:2,targets:[1,3]},{responsivePriority:3,targets:2},{responsivePriority:4,targets:4}]
+        });
+        bindScheduleRows();
+        runtime.className='datatable-runtime text-success mt-1';
+        runtime.textContent='✓ DataTables aktif (Bootstrap 5 + Responsive)';
+    }catch(err){
+        console.error(err);
+        runtime.className='datatable-runtime text-danger mt-1';
+        runtime.textContent='DataTables gagal inisialisasi: '+err.message;
+        bindScheduleRows();
+    }
+}
 
-new DataTable('#logTable',{
-    responsive:true,
-    pageLength:10,
-    lengthMenu:[[10,25,50],[10,25,50]],
-    order:[[0,'desc']],
-    language:{search:'Cari:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ log',infoEmpty:'Belum ada log',zeroRecords:'Data tidak ditemukan',emptyTable:'Belum ada riwayat log',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
-    columnDefs:[{responsivePriority:1,targets:0},{responsivePriority:2,targets:[1,3]},{responsivePriority:3,targets:2},{responsivePriority:4,targets:4}]
-});
+initTables();
 
 document.getElementById('copyPrevious').addEventListener('click',async()=>{if(!confirm('Salin pola jadwal dari minggu sebelumnya ke minggu ini? Jadwal terkirim yang sudah lampau tidak akan diubah.'))return;const button=document.getElementById('copyPrevious');button.disabled=true;const body=new FormData();body.append('csrf',csrf);body.append('action','copy_previous');body.append('week_start',weekStart);try{const response=await fetch('ajax_jadwal.php',{method:'POST',body});const data=await response.json();if(!data.success)throw new Error(data.message||'Gagal menyalin jadwal.');showAlert(data.message,'success');setTimeout(()=>location.reload(),700)}catch(error){showAlert(error.message,'danger');button.disabled=false}});
 setTimeout(()=>location.reload(),60000);
