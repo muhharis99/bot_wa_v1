@@ -57,19 +57,45 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+echo.
+echo Menyiapkan database MySQL...
+call npm run setup:db
+if errorlevel 1 (
+    echo.
+    echo [GAGAL] Database belum berhasil disiapkan.
+    echo Pastikan MySQL Laragon aktif di port 3307.
+    echo Jika user root memakai password, edit bot\.env dan public\.env.
+    popd
+    pause
+    exit /b 1
+)
+
+echo.
+echo Memeriksa environment...
+call npm run check
+if errorlevel 1 (
+    echo [GAGAL] Pemeriksaan environment gagal.
+    popd
+    pause
+    exit /b 1
+)
 popd
 
 echo.
 echo ==================================================
-echo  SETUP FILE SELESAI
+echo  SETUP LOCAL SELESAI
 echo ==================================================
-echo 1. Pastikan Laragon Apache dan MySQL aktif.
-echo 2. Buat/import database bot_wa_v1 dari database\schema.sql.
-echo 3. Jalankan start-bot.bat.
-echo 4. Buka http://localhost/bot_wa_v1/public/
-echo 5. Login awal local: admin / admin123
+echo Database dan tabel sudah dicek otomatis.
 echo.
-echo Jika root MySQL memakai password atau port berbeda,
-echo edit bot\.env dan public\.env.
+echo Jalankan bot dengan:
+echo   start-bot.bat
+echo.
+echo Buka dashboard:
+echo   http://localhost/bot_wa_v1/public/
+echo.
+echo Login awal local:
+echo   Username: admin
+echo   Password: admin123
 echo ==================================================
 pause
