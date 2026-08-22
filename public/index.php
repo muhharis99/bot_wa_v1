@@ -148,17 +148,21 @@ function bindScheduleRows(){document.querySelectorAll('#scheduleTable tbody .sch
 
 const scheduleDataTable = new DataTable('#scheduleTable',{
     responsive:true,
-    paging:false,
-    searching:false,
-    info:false,
-    ordering:false,
+    paging:true,
+    searching:true,
+    info:true,
+    ordering:true,
+    pageLength:7,
+    lengthMenu:[[7,10,25,-1],[7,10,25,'Semua']],
+    order:[[0,'asc']],
     autoWidth:false,
+    language:{search:'Cari jadwal:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ jadwal',infoEmpty:'Belum ada jadwal',zeroRecords:'Jadwal tidak ditemukan',emptyTable:'Belum ada jadwal',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
     columnDefs:[
         {responsivePriority:1,targets:0},
-        {responsivePriority:2,targets:1},
-        {responsivePriority:3,targets:2},
+        {responsivePriority:2,targets:1,orderable:false},
+        {responsivePriority:3,targets:2,orderable:false},
         {responsivePriority:4,targets:3},
-        {responsivePriority:5,targets:4}
+        {responsivePriority:5,targets:4,orderable:false,searchable:false}
     ],
     drawCallback:bindScheduleRows
 });
