@@ -48,11 +48,10 @@ if ($action === 'save') {
     $shiftStmt->execute([$shiftId]);
     if (!$shiftStmt->fetch()) json_response(false, 'Shift tidak valid.');
 
-    $normalizedJam = $jam !== '' ? (strlen($jam) === 5 ? $jam . ':00' : $jam) : null;
-    if ($normalizedJam !== null) {
-        $validStmt = $pdo->prepare('SELECT COUNT(*) FROM opsi_jam_berangkat WHERE shift_id=? AND jam_berangkat=?');
-        $validStmt->execute([$shiftId, $normalizedJam]);
-        if (!$validStmt->fetchColumn()) json_response(false, 'Jam berangkat tidak sesuai dengan shift.');
+    $normalizedJam = null;
+    if ($jam !== '') {
+        if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/', $jam)) json_response(false, 'Jam berangkat harus berformat HH:MM.');
+        $normalizedJam = strlen($jam) === 5 ? $jam . ':00' : $jam;
     }
 
     $status = $normalizedJam ? 'terjadwal' : 'belum_diatur';
