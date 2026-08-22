@@ -19,7 +19,8 @@ Bot WhatsApp pribadi berbasis **Baileys + Node.js**, dashboard **PHP native + Bo
 - Tombol **Kirim Sekarang** melalui antrean database.
 - Status koneksi, heartbeat service Node.js, dan riwayat log.
 - Login dashboard sederhana + CSRF token.
-- Konfigurasi rahasia melalui `.env` yang tidak masuk Git.
+- Satu source untuk **Laragon local** dan **shared hosting/cPanel** melalui `APP_ENV` + `.env`.
+- `npm run check` untuk pemeriksaan environment/database sebelum bot dijalankan.
 
 ## Struktur
 
@@ -28,6 +29,7 @@ bot_wa_v1/
 ├── bot/
 │   ├── server.js
 │   ├── db.js
+│   ├── check-env.js
 │   ├── whatsapp.js
 │   ├── scheduler.js
 │   ├── package.json
@@ -44,6 +46,9 @@ bot_wa_v1/
 │   ├── migrations/
 │   │   └── 2026_08_22_jadwal_mingguan.sql
 │   └── schema.sql
+├── setup-local.bat
+├── start-bot.bat
+├── LOCAL_LARAGON.md
 ├── DEPLOY_CPANEL.md
 ├── .gitignore
 └── README.md
@@ -57,7 +62,29 @@ bot_wa_v1/
 | W | 10:00–17:00 | 09:00 / 09:15 |
 | S | 14:00–20:00 | 13:00 / 13:20 |
 
-## Instalasi baru
+## Local Laragon Windows
+
+Untuk environment Laragon dengan project di `C:\laragon\www\bot_wa_v1`, MySQL port `3307`, dan Node.js 22.x:
+
+```bat
+setup-local.bat
+```
+
+Setelah database `bot_wa_v1` dibuat dan `database/schema.sql` di-import:
+
+```bat
+start-bot.bat
+```
+
+Dashboard:
+
+```text
+http://localhost/bot_wa_v1/public/
+```
+
+Panduan lengkap: **`LOCAL_LARAGON.md`**.
+
+## Instalasi hosting/cPanel
 
 ```bash
 git clone https://github.com/muhharis99/bot_wa_v1.git
@@ -65,18 +92,48 @@ cd bot_wa_v1
 ```
 
 1. Buat database MySQL lalu import `database/schema.sql`.
-2. Salin `bot/.env.example` menjadi `bot/.env` dan isi kredensial database.
-3. Salin `public/.env.example` menjadi `public/.env` dan isi kredensial database serta login dashboard.
+2. Salin `bot/.env.example` menjadi `bot/.env` dan isi `APP_ENV=production` serta kredensial database cPanel.
+3. Salin `public/.env.example` menjadi `public/.env` dan isi database serta login dashboard.
 4. Jalankan:
 
 ```bash
 cd bot
-npm install
-node server.js
+npm install --omit=dev
+npm run check
+npm start
 ```
 
-5. Arahkan domain/subdomain ke folder `public`.
-6. Login dashboard lalu scan QR WhatsApp.
+5. Arahkan domain/subdomain dashboard ke folder `public`.
+6. Jalankan `server.js` melalui Setup Node.js App/Application Manager.
+7. Login dashboard lalu scan QR WhatsApp.
+
+Panduan lengkap: **`DEPLOY_CPANEL.md`**.
+
+## Konsep environment
+
+Source PHP dan Node.js tidak perlu diedit ketika berpindah dari local ke hosting. Yang berbeda hanya file `.env`, dan file tersebut tidak masuk Git.
+
+Local Laragon:
+
+```env
+APP_ENV=local
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_NAME=bot_wa_v1
+DB_USER=root
+DB_PASS=
+```
+
+cPanel:
+
+```env
+APP_ENV=production
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=cpanelprefix_botwa
+DB_USER=cpanelprefix_user
+DB_PASS=password_database
+```
 
 ## Upgrade dari versi jadwal harian lama
 
@@ -89,8 +146,6 @@ database/migrations/2026_08_22_jadwal_mingguan.sql
 Migrasi tersebut mengubah status lama `pending/diproses` menjadi `terjadwal`, membuat `shift_id` dan `jam_berangkat_terpilih` nullable untuk hari libur, serta menyesuaikan index scheduler.
 
 Sesudah migrasi, restart aplikasi Node.js agar `bot/scheduler.js` versi terbaru digunakan.
-
-Panduan deployment shared hosting cPanel lengkap ada di **`DEPLOY_CPANEL.md`**.
 
 ## Catatan penting
 
