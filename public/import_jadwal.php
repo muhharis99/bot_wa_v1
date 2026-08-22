@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/lib/XlsxScheduleReader.php';
+require_once __DIR__ . '/lib/MasterData.php';
 require_login();
+
+ensure_shift_master($pdo);
 
 $reader = new XlsxScheduleReader();
 $error = null;
@@ -29,18 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $parsed = $reader->normalizeSchedule($rawRows, $year);
             if (!$parsed['rows']) throw new RuntimeException('Tidak ada data jadwal yang dapat dibaca dari Excel.');
 
+            ensure_shift_master($pdo);
             $shiftRows = $pdo->query('SELECT id,kode_shift,nama_shift FROM shift')->fetchAll();
             $shiftMap = [];
-            foreach ($shiftRows as $s) $shiftMap[$s['kode_shift']] = $s;
+            foreach ($shiftRows as $s) $shiftMap[strtoupper(trim($s['kode_shift']))] = $s;
 
             $validCount = 0; $warningCount = 0; $invalidCount = 0;
             foreach ($parsed['rows'] as &$row) {
                 if (!$row['valid']) { $invalidCount++; continue; }
+                $row['shift'] = strtoupper(trim((string)$row['shift']));
                 $validCount++;
                 if (!empty($row['warnings'])) $warningCount++;
                 if ($row['shift'] !== 'L' && !isset($shiftMap[$row['shift']])) {
                     $row['valid'] = false;
-                    $row['error'] = 'Kode shift tidak tersedia di master shift.';
+                    $row['error'] = 'Kode shift ' . $row['shift'] . ' tidak tersedia di master shift.';
                     $validCount--; $invalidCount++;
                 }
             }
@@ -67,9 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$preview || empty($preview['rows'])) throw new RuntimeException('Preview import sudah tidak tersedia. Upload ulang file Excel.');
             if (($preview['created_at'] ?? 0) < time() - 1800) throw new RuntimeException('Preview sudah kedaluwarsa. Upload ulang file Excel.');
 
+            ensure_shift_master($pdo);
             $shiftRows = $pdo->query('SELECT id,kode_shift FROM shift')->fetchAll();
             $shiftMap = [];
-            foreach ($shiftRows as $s) $shiftMap[$s['kode_shift']] = (int)$s['id'];
+            foreach ($shiftRows as $s) $shiftMap[strtoupper(trim($s['kode_shift']))] = (int)$s['id'];
 
             $existingStmt = $pdo->prepare('SELECT id,status FROM jadwal_harian WHERE tanggal=? LIMIT 1');
             $saveStmt = $pdo->prepare("INSERT INTO jadwal_harian (tanggal,shift_id,jam_berangkat_terpilih,status) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE shift_id=VALUES(shift_id),jam_berangkat_terpilih=VALUES(jam_berangkat_terpilih),status=VALUES(status)");
@@ -84,10 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $existing = $existingStmt->fetch();
                 if ($existing && $existing['status'] === 'terkirim' && $row['tanggal'] < date('Y-m-d')) { $skippedLocked++; continue; }
 
-                if ($row['shift'] === 'L') {
+                $shiftCode = strtoupper(trim((string)$row['shift']));
+                if ($shiftCode === 'L') {
                     $shiftId = null; $jam = null; $status = 'libur';
                 } else {
-                    $shiftId = $shiftMap[$row['shift']] ?? null;
+                    $shiftId = $shiftMap[$shiftCode] ?? null;
                     if (!$shiftId) { $skippedInvalid++; continue; }
                     $jam = $row['jam_berangkat'] ? $row['jam_berangkat'] . ':00' : null;
                     $status = $jam ? 'terjadwal' : 'belum_diatur';
@@ -172,7 +179,7 @@ function shift_label(string $shift): string {
             <td><?=e((string)$row['excel_row'])?></td>
             <td><?=e($row['tanggal'] ?? '-')?></td>
             <td><?=e($row['hari'] ?? ($row['hari_excel'] ?? '-'))?></td>
-            <td><?=!empty($row['valid'])?e(shift_label($row['shift'])):'-'?></td>
+            <td><?=isset($row['shift']) ? e(shift_label($row['shift'])) : '-'?></td>
             <td><?=e($row['jam_masuk'] ?? '-')?></td>
             <td><?=e($row['jam_berangkat'] ?? '-')?></td>
             <td><?php if(empty($row['valid'])): ?><span class="text-danger"><?=e($row['error'] ?? 'Tidak valid')?></span><?php elseif(!empty($row['warnings'])): ?><ul class="mb-0 ps-3 small"><?php foreach($row['warnings'] as $warning): ?><li><?=e($warning)?></li><?php endforeach; ?></ul><?php else: ?><span class="badge text-bg-success">Siap import</span><?php endif; ?></td>
