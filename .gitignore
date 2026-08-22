@@ -1,0 +1,15 @@
+# Rahasia / environment
+.env
+bot/.env
+public/.env
+
+# Node
+bot/node_modules/
+bot/sessions/
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
