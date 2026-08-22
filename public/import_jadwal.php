@@ -137,7 +137,9 @@ function shift_label(string $shift): string {
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Import Jadwal Excel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.drop-zone{border:2px dashed #adb5bd;border-radius:12px;padding:28px;text-align:center;background:#fff}.drop-zone.drag{border-color:#0d6efd;background:#f1f7ff}.sticky-actions{position:sticky;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);z-index:5}</style>
+    <link href="https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <style>body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.drop-zone{border:2px dashed #adb5bd;border-radius:12px;padding:28px;text-align:center;background:#fff}.drop-zone.drag{border-color:#0d6efd;background:#f1f7ff}.sticky-actions{position:sticky;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);z-index:5}.dt-container .dt-search input,.dt-container .dt-length select{border-radius:.375rem}.dtr-details{width:100%}</style>
 </head>
 <body>
 <nav class="navbar navbar-dark bg-dark"><div class="container"><a class="navbar-brand text-decoration-none" href="index.php#jadwal">Bot WA Berangkat Kerja</a><a class="btn btn-outline-light btn-sm" href="index.php#jadwal">Kembali</a></div></nav>
@@ -164,9 +166,9 @@ function shift_label(string $shift): string {
         <div class="col-md-2"><div class="card"><div class="card-body"><div class="text-secondary small">Tidak valid</div><div class="fs-4 fw-semibold text-danger"><?=e((string)$preview['invalid_count'])?></div></div></div></div>
     </div>
     <div class="alert alert-info py-2">Setelah disimpan, dashboard otomatis membuka minggu pertama dari hasil import. Jadi jika Excel berisi Januari 2024, tampilan tidak tetap di Agustus 2026.</div>
-    <div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>Baris Excel</th><th>Tanggal</th><th>Hari</th><th>Shift</th><th>Jam Masuk</th><th>Jam Berangkat</th><th>Validasi</th></tr></thead><tbody>
+    <div class="card"><div class="card-body pb-0"><table id="excelPreviewTable" class="table table-hover align-middle nowrap w-100"><thead class="table-light"><tr><th data-priority="1">Baris Excel</th><th data-priority="1">Tanggal</th><th data-priority="2">Hari</th><th data-priority="2">Shift</th><th data-priority="4">Jam Masuk</th><th data-priority="3">Jam Berangkat</th><th data-priority="1">Validasi</th></tr></thead><tbody>
     <?php foreach($preview['rows'] as $row): ?>
-        <tr class="<?=empty($row['valid'])?'table-danger':(!empty($row['warnings'])?'table-warning':'')?>"><td><?=e((string)$row['excel_row'])?></td><td><?=e($row['tanggal'] ?? '-')?></td><td><?=e($row['hari'] ?? ($row['hari_excel'] ?? '-'))?></td><td><?=isset($row['shift']) ? e(shift_label($row['shift'])) : '-'?></td><td><?=e($row['jam_masuk'] ?? '-')?></td><td><?=e($row['jam_berangkat'] ?? '-')?></td><td><?php if(empty($row['valid'])): ?><span class="text-danger"><?=e($row['error'] ?? 'Tidak valid')?></span><?php elseif(!empty($row['warnings'])): ?><ul class="mb-0 ps-3 small"><?php foreach($row['warnings'] as $warning): ?><li><?=e($warning)?></li><?php endforeach; ?></ul><?php else: ?><span class="badge text-bg-success">Siap import</span><?php endif; ?></td></tr>
+        <tr class="<?=empty($row['valid'])?'table-danger':(!empty($row['warnings'])?'table-warning':'')?>"><td><?=e((string)$row['excel_row'])?></td><td data-order="<?=e($row['tanggal'] ?? '')?>"><?=e($row['tanggal'] ?? '-')?></td><td><?=e($row['hari'] ?? ($row['hari_excel'] ?? '-'))?></td><td><?=isset($row['shift']) ? e(shift_label($row['shift'])) : '-'?></td><td><?=e($row['jam_masuk'] ?? '-')?></td><td><?=e($row['jam_berangkat'] ?? '-')?></td><td><?php if(empty($row['valid'])): ?><span class="text-danger"><?=e($row['error'] ?? 'Tidak valid')?></span><?php elseif(!empty($row['warnings'])): ?><ul class="mb-0 ps-3 small"><?php foreach($row['warnings'] as $warning): ?><li><?=e($warning)?></li><?php endforeach; ?></ul><?php else: ?><span class="badge text-bg-success">Siap import</span><?php endif; ?></td></tr>
     <?php endforeach; ?>
     </tbody></table></div>
     <div class="card-body border-top sticky-actions"><div class="d-flex flex-column flex-md-row justify-content-between gap-2">
@@ -175,5 +177,13 @@ function shift_label(string $shift): string {
     </div></div></div>
     <?php endif; ?>
 </main>
-<script>const fileInput=document.getElementById('fileExcel'),dropZone=document.getElementById('dropZone'),fileLabel=document.getElementById('fileLabel');if(fileInput){fileInput.addEventListener('change',()=>{fileLabel.textContent=fileInput.files[0]?.name||'Format .xlsx, maksimal 5 MB'});['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.remove('drag')}));dropZone.addEventListener('drop',e=>{if(e.dataTransfer.files.length){fileInput.files=e.dataTransfer.files;fileLabel.textContent=e.dataTransfer.files[0].name}})}</script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
+<script>
+const fileInput=document.getElementById('fileExcel'),dropZone=document.getElementById('dropZone'),fileLabel=document.getElementById('fileLabel');
+if(fileInput){fileInput.addEventListener('change',()=>{fileLabel.textContent=fileInput.files[0]?.name||'Format .xlsx, maksimal 5 MB'});['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.add('drag')}));['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.remove('drag')}));dropZone.addEventListener('drop',e=>{if(e.dataTransfer.files.length){fileInput.files=e.dataTransfer.files;fileLabel.textContent=e.dataTransfer.files[0].name}})}
+if(document.getElementById('excelPreviewTable')){new DataTable('#excelPreviewTable',{responsive:true,pageLength:25,lengthMenu:[[10,25,50,100],[10,25,50,100]],order:[[1,'asc']],language:{search:'Cari jadwal:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ baris',infoEmpty:'Tidak ada data',zeroRecords:'Data tidak ditemukan',emptyTable:'Preview kosong',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},columnDefs:[{responsivePriority:1,targets:[0,1,6]},{responsivePriority:2,targets:[2,3]},{responsivePriority:3,targets:5},{responsivePriority:4,targets:4}]})}
+</script>
 </body></html>
