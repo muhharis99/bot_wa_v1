@@ -2,10 +2,10 @@
 setlocal
 cd /d "%~dp0"
 
- echo ==================================================
- echo  BOT WA V1 - SETUP LOCAL LARAGON
- echo ==================================================
- echo.
+echo ==================================================
+echo  BOT WA V1 - SETUP LOCAL LARAGON
+echo ==================================================
+echo.
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -17,6 +17,21 @@ if errorlevel 1 (
 
 for /f "tokens=*" %%i in ('node -v') do set NODE_VERSION=%%i
 echo [OK] Node.js %NODE_VERSION%
+
+where php >nul 2>nul
+if errorlevel 1 (
+    echo [PERINGATAN] PHP CLI tidak ditemukan di PATH.
+    echo Import Excel tetap bisa dicoba dari Apache Laragon, tetapi extension ZipArchive belum dapat dicek otomatis.
+) else (
+    php -m | findstr /I /X "zip" >nul
+    if errorlevel 1 (
+        echo [PERINGATAN] Extension PHP zip/ZipArchive belum aktif.
+        echo Fitur Import Excel .xlsx memerlukan extension=zip pada PHP Laragon.
+        echo Aktifkan melalui Laragon ^> Menu ^> PHP ^> Extensions ^> zip jika tersedia.
+    ) else (
+        echo [OK] PHP ZipArchive aktif - Import Excel siap digunakan.
+    )
+)
 
 echo Membuat konfigurasi local...
 (
