@@ -8,14 +8,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'save_setting') {
         $nomor = preg_replace('/\D+/', '', $_POST['nomor_wa_tujuan'] ?? '');
+        if (str_starts_with($nomor, '62')) $nomor = '0' . substr($nomor, 2);
         $nama = trim($_POST['nama_panggilan'] ?? '');
         $template = trim($_POST['template_pesan'] ?? '');
         if ($nomor === '' || $template === '') {
             flash('danger', 'Nomor WhatsApp dan template pesan wajib diisi.');
+        } elseif (!preg_match('/^08\d{8,13}$/', $nomor)) {
+            flash('danger', 'Nomor WhatsApp harus memakai format lokal, contoh 081234567890.');
         } else {
             $stmt = $pdo->prepare('UPDATE pengaturan SET nomor_wa_tujuan=?, nama_panggilan=?, template_pesan=? WHERE id=1');
             $stmt->execute([$nomor, $nama, $template]);
-            flash('success', 'Pengaturan berhasil disimpan.');
+            flash('success', 'Pengaturan berhasil disimpan. Nomor akan otomatis dikonversi ke 62 saat bot mengirim pesan.');
         }
         redirect('index.php#pengaturan');
     }
@@ -102,7 +105,7 @@ $serviceAlive = $heartbeatAge <= 120;
         <div class="col-lg-6"><div class="card h-100"><div class="card-body text-center"><h2 class="h5">QR WhatsApp</h2><?php if(!empty($runtime['qr_base64'])): ?><img class="qr" src="<?=e($runtime['qr_base64'])?>" alt="QR WhatsApp"><p class="small text-secondary mt-2">Scan melalui WhatsApp &gt; Perangkat tertaut.</p><?php else: ?><div class="py-5 text-secondary">QR tidak tersedia. Jika status connected, ini normal.</div><?php endif; ?></div></div></div>
     </div>
 
-    <div class="card mb-4" id="pengaturan"><div class="card-body"><h2 class="h5">Pengaturan</h2><form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="save_setting"><div class="col-md-4"><label class="form-label">Nomor WA Tujuan</label><input class="form-control" name="nomor_wa_tujuan" value="<?=e($setting['nomor_wa_tujuan'])?>" placeholder="62812..." required></div><div class="col-md-3"><label class="form-label">Nama Panggilan</label><input class="form-control" name="nama_panggilan" value="<?=e($setting['nama_panggilan'])?>"></div><div class="col-md-5"><label class="form-label">Template Pesan</label><input class="form-control" name="template_pesan" value="<?=e($setting['template_pesan'])?>" required></div><div class="col-12"><button class="btn btn-primary">Simpan Pengaturan</button></div></form></div></div>
+    <div class="card mb-4" id="pengaturan"><div class="card-body"><h2 class="h5">Pengaturan</h2><form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?=e(csrf_token())?>"><input type="hidden" name="action" value="save_setting"><div class="col-md-4"><label class="form-label">Nomor WA Tujuan</label><input class="form-control" name="nomor_wa_tujuan" value="<?=e($setting['nomor_wa_tujuan'])?>" placeholder="081234567890" inputmode="numeric" required><div class="form-text">Gunakan format lokal 08... Bot otomatis mengubahnya menjadi 62... saat mengirim.</div></div><div class="col-md-3"><label class="form-label">Nama Panggilan</label><input class="form-control" name="nama_panggilan" value="<?=e($setting['nama_panggilan'])?>"></div><div class="col-md-5"><label class="form-label">Template Pesan</label><input class="form-control" name="template_pesan" value="<?=e($setting['template_pesan'])?>" required></div><div class="col-12"><button class="btn btn-primary">Simpan Pengaturan</button></div></form></div></div>
 
     <div class="card mb-4" id="jadwal">
         <div class="card-body">
