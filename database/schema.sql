@@ -34,31 +34,22 @@ CREATE TABLE opsi_jam_berangkat (
     CONSTRAINT fk_opsi_shift FOREIGN KEY (shift_id) REFERENCES shift(id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'06:20:00' FROM shift WHERE kode_shift='P';
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'06:30:00' FROM shift WHERE kode_shift='P';
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'09:00:00' FROM shift WHERE kode_shift='W';
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'09:15:00' FROM shift WHERE kode_shift='W';
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'13:00:00' FROM shift WHERE kode_shift='S';
-INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat)
-SELECT id,'13:20:00' FROM shift WHERE kode_shift='S';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'06:20:00' FROM shift WHERE kode_shift='P';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'06:30:00' FROM shift WHERE kode_shift='P';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'09:00:00' FROM shift WHERE kode_shift='W';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'09:15:00' FROM shift WHERE kode_shift='W';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'13:00:00' FROM shift WHERE kode_shift='S';
+INSERT IGNORE INTO opsi_jam_berangkat (shift_id,jam_berangkat) SELECT id,'13:20:00' FROM shift WHERE kode_shift='S';
 
 CREATE TABLE jadwal_harian (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     tanggal DATE NOT NULL,
-    shift_id TINYINT UNSIGNED NOT NULL,
-    jam_berangkat_terpilih TIME NOT NULL,
-    status ENUM('pending','diproses','terkirim','gagal') NOT NULL DEFAULT 'pending',
-    waktu_terkirim DATETIME NULL,
-    pesan_error TEXT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    shift_id TINYINT UNSIGNED NULL,
+    jam_berangkat_terpilih TIME NULL,
+    status ENUM('belum_diatur','terjadwal','terkirim','gagal','libur') NOT NULL DEFAULT 'belum_diatur',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_tanggal (tanggal),
-    KEY idx_scheduler (status,tanggal,jam_berangkat_terpilih),
+    KEY idx_scheduler (status,tanggal,jam_berangkat_terpilih,shift_id),
     CONSTRAINT fk_jadwal_shift FOREIGN KEY (shift_id) REFERENCES shift(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
