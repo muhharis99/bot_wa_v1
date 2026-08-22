@@ -9,33 +9,50 @@ async function getSetting() {
 async function processSchedules() {
     if (!isConnected()) return;
 
-    const rows = await query(`SELECT j.id FROM jadwal_harian j WHERE j.status='pending' AND TIMESTAMP(j.tanggal,j.jam_berangkat_terpilih) <= NOW() AND TIMESTAMP(j.tanggal,j.jam_berangkat_terpilih) >= DATE_SUB(NOW(), INTERVAL 15 MINUTE) ORDER BY j.tanggal,j.jam_berangkat_terpilih LIMIT 10`);
+    const rows = await query(`
+        SELECT j.id
+        FROM jadwal_harian j
+        WHERE j.status='terjadwal'
+          AND j.shift_id IS NOT NULL
+          AND j.jam_berangkat_terpilih IS NOT NULL
+          AND TIMESTAMP(j.tanggal,j.jam_berangkat_terpilih) <= NOW()
+          AND TIMESTAMP(j.tanggal,j.jam_berangkat_terpilih) >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+        ORDER BY j.tanggal,j.jam_berangkat_terpilih
+        LIMIT 10
+    `);
 
     for (const row of rows) {
         const conn = await pool.getConnection();
-        try {
-            await conn.beginTransaction();
-            const [claim] = await conn.execute("UPDATE jadwal_harian SET status='diproses' WHERE id=? AND status='pending'", [row.id]);
-            await conn.commit();
-            if (!claim.affectedRows) continue;
-        } catch (err) {
-            await conn.rollback();
-            conn.release();
-            console.error('Gagal claim jadwal:', err.message);
-            continue;
-        }
-        conn.release();
+        const lockName = `jadwal_harian_${row.id}`;
+        let locked = false;
 
-        const setting = await getSetting();
         try {
-            await sendText(setting.nomor_wa_tujuan, setting.template_pesan);
-            await query("UPDATE jadwal_harian SET status='terkirim', waktu_terkirim=NOW(), pesan_error=NULL WHERE id=?", [row.id]);
-            await query("INSERT INTO log_pesan (jadwal_harian_id,isi_pesan,nomor_tujuan,status,waktu) VALUES (?,?,?,'terkirim',NOW())", [row.id, setting.template_pesan, setting.nomor_wa_tujuan]);
-            console.log(`Jadwal #${row.id} terkirim.`);
+            const [lockRows] = await conn.execute('SELECT GET_LOCK(?,0) AS locked', [lockName]);
+            locked = Number(lockRows[0]?.locked) === 1;
+            if (!locked) continue;
+
+            const [currentRows] = await conn.execute("SELECT status,shift_id,jam_berangkat_terpilih FROM jadwal_harian WHERE id=? LIMIT 1", [row.id]);
+            const current = currentRows[0];
+            if (!current || current.status !== 'terjadwal' || current.shift_id === null || current.jam_berangkat_terpilih === null) continue;
+
+            const setting = await getSetting();
+            try {
+                await sendText(setting.nomor_wa_tujuan, setting.template_pesan);
+                await conn.execute("UPDATE jadwal_harian SET status='terkirim' WHERE id=? AND status='terjadwal'", [row.id]);
+                await conn.execute("INSERT INTO log_pesan (jadwal_harian_id,isi_pesan,nomor_tujuan,status,waktu) VALUES (?,?,?,'terkirim',NOW())", [row.id, setting.template_pesan, setting.nomor_wa_tujuan]);
+                console.log(`Jadwal #${row.id} terkirim.`);
+            } catch (err) {
+                await conn.execute("UPDATE jadwal_harian SET status='gagal' WHERE id=? AND status='terjadwal'", [row.id]);
+                await conn.execute("INSERT INTO log_pesan (jadwal_harian_id,isi_pesan,nomor_tujuan,status,waktu,pesan_error) VALUES (?,?,?,'gagal',NOW(),?)", [row.id, setting.template_pesan, setting.nomor_wa_tujuan, err.message]);
+                console.error(`Jadwal #${row.id} gagal:`, err.message);
+            }
         } catch (err) {
-            await query("UPDATE jadwal_harian SET status='gagal', pesan_error=? WHERE id=?", [err.message, row.id]);
-            await query("INSERT INTO log_pesan (jadwal_harian_id,isi_pesan,nomor_tujuan,status,waktu,pesan_error) VALUES (?,?,?,'gagal',NOW(),?)", [row.id, setting.template_pesan, setting.nomor_wa_tujuan, err.message]);
-            console.error(`Jadwal #${row.id} gagal:`, err.message);
+            console.error(`Gagal memproses jadwal #${row.id}:`, err.message);
+        } finally {
+            if (locked) {
+                try { await conn.execute('SELECT RELEASE_LOCK(?)', [lockName]); } catch (_) {}
+            }
+            conn.release();
         }
     }
 }
@@ -61,7 +78,6 @@ async function processCommands() {
 }
 
 async function resetStuckJobs() {
-    await query("UPDATE jadwal_harian SET status='pending' WHERE status='diproses' AND updated_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
     await query("UPDATE perintah_bot SET status='pending' WHERE status='diproses' AND created_at < DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
 }
 
