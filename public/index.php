@@ -91,8 +91,10 @@ $serviceAlive = $heartbeatAge <= 120;
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Dashboard Bot WA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/3.0.4/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <style>
-        body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.qr{max-width:280px;width:100%}.schedule-row.is-locked{background:#f8f9fa}.save-feedback{min-width:92px;display:inline-block}.today-row{box-shadow:inset 4px 0 #0d6efd}.schedule-table td{vertical-align:middle}.quick-time{font-size:.72rem;padding:.1rem .35rem}
+        body{background:#f5f7fb}.card{border:0;box-shadow:0 .125rem .5rem rgba(0,0,0,.06)}.qr{max-width:280px;width:100%}.schedule-row.is-locked{background:#f8f9fa}.save-feedback{min-width:92px;display:inline-block}.today-row{box-shadow:inset 4px 0 #0d6efd}.schedule-table td{vertical-align:middle}.quick-time{font-size:.72rem;padding:.1rem .35rem}.dt-container .dt-search input,.dt-container .dt-length select{border-radius:.375rem}.dtr-details{width:100%}.dtr-details li{padding:.5rem 0!important}.dtr-title{min-width:110px}.table.dataTable>tbody>tr.child ul.dtr-details{display:block}
     </style>
 </head>
 <body>
@@ -113,21 +115,25 @@ $serviceAlive = $heartbeatAge <= 120;
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3"><div><h2 class="h5 mb-1">Jadwal Mingguan</h2><div class="text-secondary small"><?=e($weekDate->format('d-m-Y'))?> s/d <?=e($weekEndDate->format('d-m-Y'))?></div></div><button type="button" class="btn btn-outline-primary" id="copyPrevious">Salin Jadwal Minggu Lalu</button></div>
         <div class="d-flex flex-wrap gap-2 mb-3"><a class="btn btn-outline-secondary btn-sm" href="?week=<?=e($prevWeek)?>#jadwal">◀ Minggu Sebelumnya</a><a class="btn btn-outline-dark btn-sm" href="?week=<?=e($thisWeek)?>#jadwal">Minggu Ini</a><a class="btn btn-outline-secondary btn-sm" href="?week=<?=e($nextWeek)?>#jadwal">Minggu Berikutnya ▶</a></div>
         <div id="ajaxAlert"></div>
-        <div class="table-responsive"><table class="table schedule-table align-middle mb-0"><thead><tr><th style="min-width:180px">Tanggal &amp; Hari</th><th style="min-width:180px">Shift</th><th style="min-width:200px">Jam Berangkat</th><th style="min-width:120px">Status</th><th style="min-width:110px">Simpan</th></tr></thead><tbody>
+        <table id="scheduleTable" class="table table-hover schedule-table align-middle nowrap w-100"><thead><tr><th data-priority="1">Tanggal &amp; Hari</th><th data-priority="2">Shift</th><th data-priority="3">Jam Berangkat</th><th data-priority="4">Status</th><th data-priority="5">Simpan</th></tr></thead><tbody>
         <?php foreach($days as $d): $badge = status_badge($d['status']); ?>
             <tr class="schedule-row <?= $d['locked']?'is-locked':'' ?> <?= $d['tanggal']===date('Y-m-d')?'today-row':'' ?>" data-date="<?=e($d['tanggal'])?>" data-status="<?=e($d['status'])?>">
-                <td><strong><?=e($d['hari'])?></strong><br><span class="text-secondary small"><?=e($d['display'])?></span><?php if($d['locked']): ?><br><span class="text-danger small">Riwayat terkunci</span><?php endif; ?></td>
+                <td data-order="<?=e($d['tanggal'])?>"><strong><?=e($d['hari'])?></strong><br><span class="text-secondary small"><?=e($d['display'])?></span><?php if($d['locked']): ?><br><span class="text-danger small">Riwayat terkunci</span><?php endif; ?></td>
                 <td><select class="form-select form-select-sm shift-select" <?= $d['locked']?'disabled':'' ?>><option value="">Belum diatur</option><?php foreach($shifts as $s): ?><option value="<?=e((string)$s['id'])?>" <?= (string)$d['shift_id']===(string)$s['id']?'selected':'' ?>><?=e($s['kode_shift'].' - '.$s['nama_shift'])?></option><?php endforeach; ?><option value="libur" <?= $d['status']==='libur'?'selected':'' ?>>Libur</option></select></td>
                 <td><input type="time" class="form-control form-control-sm jam-input" value="<?=e($d['jam'])?>" step="60" <?= ($d['locked'] || $d['status']==='libur' || !$d['shift_id'])?'disabled':'' ?>><div class="quick-times mt-1 d-flex flex-wrap gap-1"></div></td>
                 <td><span class="badge status-badge text-bg-<?=e($badge[0])?>"><?=e($badge[1])?></span></td>
                 <td><span class="save-feedback small text-secondary"><?= $d['locked']?'Terkunci':'' ?></span></td>
             </tr>
         <?php endforeach; ?>
-        </tbody></table></div>
+        </tbody></table>
     </div></div>
 
-    <div class="card"><div class="card-body"><h2 class="h5">Riwayat Log</h2><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Waktu</th><th>Nomor</th><th>Pesan</th><th>Status</th><th>Error</th></tr></thead><tbody><?php foreach($logs as $l): ?><tr><td><?=e($l['waktu'])?></td><td><?=e($l['nomor_tujuan'])?></td><td><?=e($l['isi_pesan'])?></td><td><?=e($l['status'])?></td><td class="text-danger small"><?=e($l['pesan_error'] ?: '-')?></td></tr><?php endforeach; ?></tbody></table></div></div></div>
+    <div class="card"><div class="card-body"><h2 class="h5 mb-3">Riwayat Log</h2><table id="logTable" class="table table-hover table-sm align-middle nowrap w-100"><thead><tr><th data-priority="1">Waktu</th><th data-priority="2">Nomor</th><th data-priority="3">Pesan</th><th data-priority="2">Status</th><th data-priority="4">Error</th></tr></thead><tbody><?php foreach($logs as $l): ?><tr><td data-order="<?=e($l['waktu'])?>"><?=e($l['waktu'])?></td><td><?=e($l['nomor_tujuan'])?></td><td><?=e($l['isi_pesan'])?></td><td><?=e($l['status'])?></td><td class="text-danger small"><?=e($l['pesan_error'] ?: '-')?></td></tr><?php endforeach; ?></tbody></table></div></div>
 </main>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.4/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/3.0.4/js/responsive.bootstrap5.min.js"></script>
 <script>
 const optionMap = <?=json_encode($optionMap, JSON_UNESCAPED_SLASHES)?>;
 const csrf = <?=json_encode(csrf_token())?>;
@@ -135,11 +141,37 @@ const weekStart = <?=json_encode($weekStart)?>;
 const statusMeta = {belum_diatur:['secondary','Belum diatur'],terjadwal:['primary','Terjadwal'],terkirim:['success','Terkirim'],libur:['warning','Libur'],gagal:['danger','Gagal']};
 
 function setStatus(row,status){row.dataset.status=status;const badge=row.querySelector('.status-badge');const meta=statusMeta[status]||statusMeta.belum_diatur;badge.className=`badge status-badge text-bg-${meta[0]}`;badge.textContent=meta[1]}
-function renderQuickTimes(row){const shift=row.querySelector('.shift-select').value,wrap=row.querySelector('.quick-times'),input=row.querySelector('.jam-input');wrap.innerHTML='';if(!shift||shift==='libur')return;(optionMap[shift]||[]).forEach(jam=>{const b=document.createElement('button');b.type='button';b.className='btn btn-outline-secondary quick-time';b.textContent=jam;b.disabled=row.classList.contains('is-locked');b.addEventListener('click',()=>{input.value=jam;saveRow(row)});wrap.appendChild(b)})}
-async function saveRow(row){const feedback=row.querySelector('.save-feedback'),shift=row.querySelector('.shift-select').value,input=row.querySelector('.jam-input');feedback.className='save-feedback small text-secondary';feedback.textContent='Menyimpan...';const body=new FormData();body.append('csrf',csrf);body.append('action','save');body.append('tanggal',row.dataset.date);body.append('shift_id',shift);body.append('jam_berangkat',input.value);try{const response=await fetch('ajax_jadwal.php',{method:'POST',body});const data=await response.json();if(!data.success)throw new Error(data.message||'Gagal menyimpan.');setStatus(row,data.status);feedback.className='save-feedback small text-success';feedback.textContent='✓ Tersimpan'}catch(error){feedback.className='save-feedback small text-danger';feedback.textContent='Gagal';showAlert(error.message,'danger')}}
+function renderQuickTimes(row){const shift=row.querySelector('.shift-select')?.value,wrap=row.querySelector('.quick-times'),input=row.querySelector('.jam-input');if(!wrap||!input)return;wrap.innerHTML='';if(!shift||shift==='libur')return;(optionMap[shift]||[]).forEach(jam=>{const b=document.createElement('button');b.type='button';b.className='btn btn-outline-secondary quick-time';b.textContent=jam;b.disabled=row.classList.contains('is-locked');b.addEventListener('click',()=>{input.value=jam;saveRow(row)});wrap.appendChild(b)})}
+async function saveRow(row){const feedback=row.querySelector('.save-feedback'),shift=row.querySelector('.shift-select')?.value||'',input=row.querySelector('.jam-input');if(!feedback||!input)return;feedback.className='save-feedback small text-secondary';feedback.textContent='Menyimpan...';const body=new FormData();body.append('csrf',csrf);body.append('action','save');body.append('tanggal',row.dataset.date);body.append('shift_id',shift);body.append('jam_berangkat',input.value);try{const response=await fetch('ajax_jadwal.php',{method:'POST',body});const data=await response.json();if(!data.success)throw new Error(data.message||'Gagal menyimpan.');setStatus(row,data.status);feedback.className='save-feedback small text-success';feedback.textContent='✓ Tersimpan'}catch(error){feedback.className='save-feedback small text-danger';feedback.textContent='Gagal';showAlert(error.message,'danger')}}
 function showAlert(message,type='success'){document.getElementById('ajaxAlert').innerHTML=`<div class="alert alert-${type} py-2">${message}</div>`;setTimeout(()=>document.getElementById('ajaxAlert').innerHTML='',4000)}
+function bindScheduleRows(){document.querySelectorAll('#scheduleTable tbody .schedule-row').forEach(row=>{if(row.dataset.bound==='1')return;row.dataset.bound='1';const shift=row.querySelector('.shift-select'),input=row.querySelector('.jam-input');renderQuickTimes(row);if(row.classList.contains('is-locked')||!shift||!input)return;shift.addEventListener('change',async()=>{if(shift.value==='libur'||!shift.value){input.value='';input.disabled=true}else input.disabled=false;renderQuickTimes(row);await saveRow(row)});input.addEventListener('change',()=>saveRow(row))})}
 
-document.querySelectorAll('.schedule-row').forEach(row=>{const shift=row.querySelector('.shift-select'),input=row.querySelector('.jam-input');renderQuickTimes(row);if(row.classList.contains('is-locked'))return;shift.addEventListener('change',async()=>{if(shift.value==='libur'||!shift.value){input.value='';input.disabled=true}else input.disabled=false;renderQuickTimes(row);await saveRow(row)});input.addEventListener('change',()=>saveRow(row))});
+const scheduleDataTable = new DataTable('#scheduleTable',{
+    responsive:true,
+    paging:false,
+    searching:false,
+    info:false,
+    ordering:false,
+    autoWidth:false,
+    columnDefs:[
+        {responsivePriority:1,targets:0},
+        {responsivePriority:2,targets:1},
+        {responsivePriority:3,targets:2},
+        {responsivePriority:4,targets:3},
+        {responsivePriority:5,targets:4}
+    ],
+    drawCallback:bindScheduleRows
+});
+bindScheduleRows();
+
+new DataTable('#logTable',{
+    responsive:true,
+    pageLength:10,
+    lengthMenu:[[10,25,50],[10,25,50]],
+    order:[[0,'desc']],
+    language:{search:'Cari:',lengthMenu:'Tampilkan _MENU_',info:'Menampilkan _START_–_END_ dari _TOTAL_ log',infoEmpty:'Belum ada log',zeroRecords:'Data tidak ditemukan',emptyTable:'Belum ada riwayat log',paginate:{first:'Pertama',last:'Terakhir',next:'Berikutnya',previous:'Sebelumnya'}},
+    columnDefs:[{responsivePriority:1,targets:0},{responsivePriority:2,targets:[1,3]},{responsivePriority:3,targets:2},{responsivePriority:4,targets:4}]
+});
 
 document.getElementById('copyPrevious').addEventListener('click',async()=>{if(!confirm('Salin pola jadwal dari minggu sebelumnya ke minggu ini? Jadwal terkirim yang sudah lampau tidak akan diubah.'))return;const button=document.getElementById('copyPrevious');button.disabled=true;const body=new FormData();body.append('csrf',csrf);body.append('action','copy_previous');body.append('week_start',weekStart);try{const response=await fetch('ajax_jadwal.php',{method:'POST',body});const data=await response.json();if(!data.success)throw new Error(data.message||'Gagal menyalin jadwal.');showAlert(data.message,'success');setTimeout(()=>location.reload(),700)}catch(error){showAlert(error.message,'danger');button.disabled=false}});
 setTimeout(()=>location.reload(),60000);
