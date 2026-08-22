@@ -1,13 +1,14 @@
 {
   "name": "bot-wa-v1",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Bot WhatsApp notifikasi berangkat kerja otomatis",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "check": "node check-env.js"
+    "check": "node check-env.js",
+    "setup:db": "node setup-db.js"
   },
   "engines": {
     "node": ">=18"
